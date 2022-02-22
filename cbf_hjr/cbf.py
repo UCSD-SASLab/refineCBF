@@ -1,8 +1,8 @@
 import hj_reachability as hj
 import numpy as np
 from tqdm import tqdm
-from cbf_opt.cbf import CBF
-from cbf_opt.dynamics import Dynamics
+from cbf_opt.cbf import CBF, ControlAffineCBF
+from cbf_opt.dynamics import Dynamics, ControlAffineDynamics
 
 
 class TabularCBF(CBF):
@@ -10,9 +10,7 @@ class TabularCBF(CBF):
     Provides a tabularized implementation of a CBF to interface with a spatially-discretized value function (e.g. from hj_reachability). Interfaces with `cbf_opt` and can be used to spatially discretize an existing value function.
     """
 
-    def __init__(
-        self, dynamics: Dynamics, grid: hj.grid.Grid, params: dict = dict(), **kwargs
-    ) -> None:
+    def __init__(self, dynamics: Dynamics, params: dict = dict(), **kwargs) -> None:
         """Initialize a TabularCBF.
 
         Args:
@@ -21,7 +19,8 @@ class TabularCBF(CBF):
             params (dict, optional): Parameters for the CBF, e.g. discount rate. Defaults to dict().
         """
         super().__init__(dynamics, params, **kwargs)
-        self.grid = grid
+        self.grid = kwargs.get("grid")
+        assert self.grid is not None, "Requires grid"
         self.grid_states_np = np.array(self.grid.states)
         self.grid_shape = self.grid.shape
         self.vf_table = None
@@ -39,13 +38,13 @@ class TabularCBF(CBF):
             float: Value function at current state, time # TODO: check float or (1,)
         """
         assert self.vf_table is not None, "Requires instantiation of vf_table"
-        return self.grid.interpolate(self.vf_table, state)
+        return np.array(self.grid.interpolate(self.vf_table, state))
 
     def _grad_vf(self, state, time):
         if self.grad_vf_table is None:
             self.grad_vf_table = self.grid.grad_values(self.vf_table)
 
-        return self.grid.interpolate(self.grad_vf_table, state)
+        return np.array(self.grid.interpolate(self.grad_vf_table, state))
 
     # TOTEST
     def tabularize_cbf(self, orig_cbf: CBF, time=0.0):
@@ -96,3 +95,8 @@ class TabularCBF(CBF):
                                                         raise NotImplementedError(
                                                             "Only up to 6 dimensions supported"
                                                         )
+
+
+class TabularControlAffineCBF(ControlAffineCBF, TabularCBF):
+    def __init__(self, dynamics: ControlAffineDynamics, params: dict = dict(), **kwargs) -> None:
+        super().__init__(dynamics, params, **kwargs)
