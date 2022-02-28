@@ -20,7 +20,9 @@ class TabularCBF(CBF):
         """
         super().__init__(dynamics, params, **kwargs)
         self.grid = kwargs.get("grid")
-        assert self.grid is not None, "Requires grid"
+        assert (
+            self.grid is not None
+        ), "Requires grid"  # FIXME: assert isinstance(self.grid, hj.grid.Grid)
         self.grid_states_np = np.array(self.grid.states)
         self.grid_shape = self.grid.shape
         self.vf_table = None
@@ -51,6 +53,12 @@ class TabularCBF(CBF):
         """
         Tabularizes a control-affine CBF.
         """
+        # TODO: test alternative
+        # self.orig_cbf = orig_cbf
+        # assert isinstance(orig_cbf, CBF)
+        # assert self.orig_cbf.dynamics == self.dynamics
+        # self.vf_table = np.array(self.orig_cbf.vf(jnp.moveaxis(self.grid.states, -1, 0), time))
+
         self.orig_cbf = orig_cbf
         assert isinstance(self.orig_cbf, CBF)
         assert self.orig_cbf.dynamics == self.dynamics

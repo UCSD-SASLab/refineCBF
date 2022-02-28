@@ -41,3 +41,6 @@ class HJControlAffineDynamics(hj.ControlAndDisturbanceAffineDynamics):
 
     def disturbance_jacobian(self, state, time=None):
         return jnp.array(self.dynamics.disturbance_jacobian(state, time))
+
+    def optimal_control_state(self, state, time, grad_value):
+        return self.optimal_control_and_disturbance(state, time, grad_value)[0]
