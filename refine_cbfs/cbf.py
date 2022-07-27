@@ -52,7 +52,7 @@ class TabularCBF(CBF):
 
     def _grad_vf(self, state, time):
         if self.grad_vf_table is None:
-            self.grad_vf_table = self.grid.grad_values(self.vf_table)
+            self.grad_vf_table = np.array(self.grid.grad_values(self.vf_table))
 
         if state.ndim == 1:
             return self.grid.interpolate(self.grad_vf_table, state)

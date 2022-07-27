@@ -4,7 +4,10 @@ import hj_reachability as hj
 
 
 class HJControlAffineDynamics(hj.ControlAndDisturbanceAffineDynamics):
-    """Provides portability between cbf_opt and hj_reachability Dynamics definitions"""
+    """
+    Provides portability between cbf_opt and hj_reachability Dynamics definitions.
+    Nonetheless, this still requires dynamics to be defined in `jax`.
+    """
 
     def __init__(self, dynamics, **kwargs):
         assert isinstance(dynamics, ControlAffineDynamics)
