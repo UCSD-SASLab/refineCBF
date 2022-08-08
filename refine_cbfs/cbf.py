@@ -26,9 +26,9 @@ class TabularCBF(CBF):
         )  # FIXME: Pass in grid as argument, without having weird things happen in super().__init__ --> see below
         self.grid_states_np = np.array(self.grid.states)
         self.grid_shape = self.grid.shape
-        self.vf_table = None
+        self._vf_table = None
         self.orig_cbf = None
-        self.grad_vf_table = None
+        self._grad_vf_table = None
         super().__init__(dynamics, params, test, **kwargs)
 
     def vf(self, state: np.ndarray, time: float):
@@ -51,28 +51,22 @@ class TabularCBF(CBF):
             return vf
 
     def _grad_vf(self, state, time):
-        if self.grad_vf_table is None:
-            self.grad_vf_table = np.array(self.grid.grad_values(self.vf_table))
-
         if state.ndim == 1:
-            return self.grid.interpolate(self.grad_vf_table, state)
+            return self.grid.interpolate(self._grad_vf_table, state)
         else:
             grad_vf = np.zeros_like(state)
             for i in range(state.shape[0]):
-                grad_vf[i] = self.grid.interpolate(self.grad_vf_table, state[i])
+                grad_vf[i] = self.grid.interpolate(self._grad_vf_table, state[i])
         return grad_vf
+    
+    @property
+    def vf_table(self):
+        return self._vf_table
 
-    # def is_unsafe(self, state: np.ndarray, time: float):
-    #     """_summary_
-
-    #     Args:
-    #         state (np.ndarray): current state (n,)
-
-    #     """
-    #     is_unsafe_array = np.zeros(state.shape[0], dtype=bool)
-    #     for i in range(state.shape[0]):
-    #         is_unsafe_array[i] = super().is_unsafe(state[i], time)
-    #     return is_unsafe_array
+    @vf_table.setter
+    def vf_table(self, value):
+        self._vf_table = value
+        self._grad_vf_table = np.array(self.grid.grad_values(self._vf_table))
 
     def tabularize_cbf(self, orig_cbf: CBF, time=0.0):
         """
@@ -82,6 +76,13 @@ class TabularCBF(CBF):
         assert isinstance(orig_cbf, CBF)
         assert self.orig_cbf.dynamics == self.dynamics
         self.vf_table = np.array(self.orig_cbf.vf(self.grid.states, time))
+    
+    def get_cbf_cond_table(self, gamma):
+        dV = hj.utils.multivmap(
+            lambda state, value, grad_value: self.dynamics.hamiltonian(state, 0., value, grad_value), 
+            np.arange(self.grid.ndim))(self.grid.states, self.vf_table, self._grad_vf_table)
+        
+        return dV + gamma * self.vf_table
 
 
 class TabularControlAffineCBF(ControlAffineCBF, TabularCBF):
