@@ -99,7 +99,7 @@ class NominalControlHJNP:
     def solve(self, target = None):
         self.target = target if target is not None else self.target
         assert self.target.shape[0] == self.grid.ndim, "Target has to match dimension of grid + dynamics"
-        target_f = self._get_target_function(target)
+        target_f = self._get_target_function(self.target)
         init_values = hj.utils.multivmap(target_f, jnp.arange(self.grid.ndim))(self.grid.states)
         solver_settings = hj.SolverSettings.with_accuracy(
             self.solver_accuracy, value_postprocessor=self.value_pp(init_values)
