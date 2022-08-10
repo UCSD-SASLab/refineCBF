@@ -6,13 +6,13 @@ from cbf_opt.dynamics import Dynamics, ControlAffineDynamics
 
 class TabularCBF(CBF):
     """
-    Provides a tabularized implementation of a CBF to interface with a spatially-discretized value function
-    (e.g. from hj_reachability). Interfaces with `cbf_opt` and can be used to spatially discretize an existing val fct.
+    Provides a tabularized implementation of a CBF to interface with a spatially
+    -discretized value function (e.g. from hj_reachability).
+    Interfaces with `cbf_opt` and can be used to spatially discretize
+    an existing val fct.
     """
 
-    def __init__(
-        self, dynamics: Dynamics, params: dict = dict(), test: bool = False, **kwargs
-    ) -> None:
+    def __init__(self, dynamics: Dynamics, params: dict = dict(), test: bool = False, **kwargs) -> None:
         """Initialize a TabularCBF.
 
         Args:
@@ -58,7 +58,7 @@ class TabularCBF(CBF):
             for i in range(state.shape[0]):
                 grad_vf[i] = self.grid.interpolate(self._grad_vf_table, state[i])
         return grad_vf
-    
+
     @property
     def vf_table(self):
         return self._vf_table
@@ -76,17 +76,16 @@ class TabularCBF(CBF):
         assert isinstance(orig_cbf, CBF)
         assert self.orig_cbf.dynamics == self.dynamics
         self.vf_table = np.array(self.orig_cbf.vf(self.grid.states, time))
-    
+
     def get_cbf_cond_table(self, gamma):
         dV = hj.utils.multivmap(
-            lambda state, value, grad_value: self.dynamics.hamiltonian(state, 0., value, grad_value), 
-            np.arange(self.grid.ndim))(self.grid.states, self.vf_table, self._grad_vf_table)
-        
+            lambda state, value, grad_value: self.dynamics.hamiltonian(state, 0.0, value, grad_value),
+            np.arange(self.grid.ndim),
+        )(self.grid.states, self.vf_table, self._grad_vf_table)
+
         return dV + gamma * self.vf_table
 
 
 class TabularControlAffineCBF(ControlAffineCBF, TabularCBF):
-    def __init__(
-        self, dynamics: ControlAffineDynamics, params: dict = dict(), test: bool = False, **kwargs
-    ) -> None:
+    def __init__(self, dynamics: ControlAffineDynamics, params: dict = dict(), test: bool = False, **kwargs) -> None:
         super().__init__(dynamics, params, test, **kwargs)
