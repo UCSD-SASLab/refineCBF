@@ -7,6 +7,11 @@ class HJControlAffineDynamics(hj.ControlAndDisturbanceAffineDynamics):
     """
     Provides portability between cbf_opt and hj_reachability Dynamics definitions.
     Nonetheless, this still requires dynamics to be defined in `jax`.
+    kwargs arguments:
+    - control_mode: "max" or "min"
+    - disturbance_mode: "max" or "min"
+    - control_space: hj.sets.Box
+    - disturbance_space: hj.sets.Box
     """
 
     def __init__(self, dynamics, **kwargs):
