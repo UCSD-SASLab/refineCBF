@@ -56,7 +56,8 @@ class TabularCBF(CBF):
         else:
             grad_vf = np.zeros_like(state)
             for i in range(state.shape[0]):
-                grad_vf[i] = self.grid.interpolate(self._grad_vf_table, state[i])
+                state_i = np.clip(state[i], np.array(self.grid.domain.lo) + 0.01, np.array(self.grid.domain.hi) - 0.01)
+                grad_vf[i] = self.grid.interpolate(self._grad_vf_table, state_i)
         return grad_vf
 
     @property
