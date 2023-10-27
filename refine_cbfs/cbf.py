@@ -1,7 +1,10 @@
 import hj_reachability as hj
 import numpy as np
+import jax.numpy as jnp
 from cbf_opt.cbf import CBF, ControlAffineCBF
 from cbf_opt.dynamics import Dynamics, ControlAffineDynamics
+from tqdm import tqdm
+from scipy.interpolate import interp1d
 
 
 class TabularCBF(CBF):
@@ -93,3 +96,50 @@ class TabularCBF(CBF):
 class TabularControlAffineCBF(ControlAffineCBF, TabularCBF):
     def __init__(self, dynamics: ControlAffineDynamics, params: dict = dict(), test: bool = False, **kwargs) -> None:
         super().__init__(dynamics, params, test, **kwargs)
+
+
+class TabularTVControlAffineCBF(TabularControlAffineCBF):
+    from scipy.interpolate import interp1d
+
+    @property
+    def vf_table(self):
+        return self._vf_table
+
+    def set_vf_table(self, times, values):
+        if isinstance(values, interp1d):
+            self._vf_table = values
+            nbr_steps = max(len(times), 21)
+            times = np.linspace(times[0], times[-1], nbr_steps)
+            grad_vfs = []
+            for time in tqdm(times):
+                grad_vfs.append(np.array(self.grid.grad_values(self.vf_table(time))))
+        else:
+            self._vf_table = interp1d(times, values, axis=0)
+            grad_vfs = []
+            for value in tqdm(values):
+                grad_vfs.append(np.array(self.grid.grad_values(value)))
+        grad_vfs = np.array(grad_vfs)
+        self._grad_vf_table = interp1d(times, grad_vfs, axis=0)
+
+    def vf(self, state, time):
+        assert self.vf_table is not None and isinstance(self.vf_table, interp1d)
+        if state.ndim == 1:
+            return self.grid.interpolate(self.vf_table(time)[0], state)
+        else:
+            vf = np.zeros(state.shape[0])
+            for i in range(state.shape[0]):
+                state_i = jnp.clip(state[i], jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+                vf[i] = self.grid.interpolate(self.vf_table(time)[0], state_i)
+            return vf
+
+    def _grad_vf(self, state, time):
+        if state.ndim == 1:
+            return self.grid.interpolate(self._grad_vf_table(time)[0], state)
+        else:
+            grad_vf = np.zeros_like(state)
+            for i in range(state.shape[0]):
+                state_i = jnp.clip(
+                    state[i], jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01
+                )
+                grad_vf[i] = self.grid.interpolate(self._grad_vf_table(time)[0], state_i)
+            return grad_vf
