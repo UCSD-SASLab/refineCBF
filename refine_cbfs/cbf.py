@@ -43,16 +43,19 @@ class TabularCBF(CBF):
         """
         assert self.vf_table is not None, "Requires instantiation of vf_table"
         if state.ndim == 1:
-            return self.grid.interpolate(self.vf_table, state)
+            state_i = jnp.clip(state, jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+            return self.grid.interpolate(self.vf_table, state_i)
         else:
             vf = np.zeros(state.shape[0])
             for i in range(state.shape[0]):
-                vf[i] = self.grid.interpolate(self.vf_table, state[i])
+                state_i = jnp.clip(state[i], jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+                vf[i] = self.grid.interpolate(self.vf_table, state_i)
             return vf
 
     def _grad_vf(self, state, time):
         if state.ndim == 1:
-            return self.grid.interpolate(self._grad_vf_table, state)
+            state_i = jnp.clip(state, jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+            return self.grid.interpolate(self._grad_vf_table, state_i)
         else:
             grad_vf = np.zeros_like(state)
             for i in range(state.shape[0]):
