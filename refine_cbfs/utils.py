@@ -1,5 +1,6 @@
 import functools
 import numpy as np
+import jax.numpy as jnp
 from hj_reachability import Grid
 
 
@@ -28,3 +29,20 @@ class Grid(Grid):
             * values[np.ix_(*np.stack([index_lo, index_hi], -1))],
             tuple(range(self.ndim)),
         )
+
+
+def build_sdf(boundary, obstacles):
+    """
+    Args:
+        boundary: [n x 2] matrix indicating upper and lower boundaries of safe space
+        obstacles: list of [n x 2] matrices indicating obstacles in the state space
+    Returns:
+        Function that can be queried for unbatched state vector
+    """
+    def sdf(x):
+        sdf = jnp.min(jnp.array([x - boundary[:,0], boundary[:,1] - x]))
+        for obstacle in obstacles:
+            obstacle_sdf = jnp.max(jnp.array([obstacle[:,0] - x, x - obstacle[:,1]]))
+            sdf = jnp.min(jnp.array([sdf, obstacle_sdf]))
+        return sdf
+    return sdf
