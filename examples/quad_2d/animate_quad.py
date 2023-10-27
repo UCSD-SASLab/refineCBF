@@ -12,11 +12,11 @@ import matplotlib.transforms as mtransforms
 import matplotlib.animation as animation
 
 
-def get_drone(ax, x, y, θ):
-    rod_width = 2.0
-    rod_height = 0.15
-    axle_height = 0.2
-    axle_width = 0.05
+def get_drone(ax, x, y, θ, rel_size=1.0, height_scale=1.0, color="tab:blue", alpha=1.0):
+    rod_width = 2.0 * rel_size
+    rod_height = 0.15 * rel_size * height_scale
+    axle_height = 0.2 * rel_size * height_scale
+    axle_width = 0.05 * rel_size
     prop_width = 0.5 * rod_width
     prop_height = 1.5 * rod_height
     hub_width = 0.3 * rod_width
@@ -36,30 +36,34 @@ def get_drone(ax, x, y, θ):
         (-rod_width / 2, -rod_height / 2),
         rod_width,
         rod_height,
-        facecolor="tab:blue",
+        facecolor=color,
         edgecolor="k",
+        alpha=alpha,
     )
     hub = mpatches.FancyBboxPatch(
         (-hub_width / 2, -hub_height / 2),
         hub_width,
         hub_height,
-        facecolor="tab:blue",
+        facecolor=color,
         edgecolor="k",
         boxstyle="Round,pad=0.,rounding_size=0.05",
+        alpha=alpha,
     )
     axle_left = mpatches.Rectangle(
         (-rod_width / 2, rod_height / 2),
         axle_width,
         axle_height,
-        facecolor="tab:blue",
+        facecolor=color,
         edgecolor="k",
+        alpha=alpha,
     )
     axle_right = mpatches.Rectangle(
         (rod_width / 2 - axle_width, rod_height / 2),
         axle_width,
         axle_height,
-        facecolor="tab:blue",
+        facecolor=color,
         edgecolor="k",
+        alpha=alpha,
     )
     prop_left = mpatches.Ellipse(
         ((axle_width - rod_width) / 2, rod_height / 2 + axle_height),
@@ -67,7 +71,7 @@ def get_drone(ax, x, y, θ):
         prop_height,
         facecolor="tab:gray",
         edgecolor="k",
-        alpha=0.7,
+        alpha=0.7 * alpha,
     )
     prop_right = mpatches.Ellipse(
         ((rod_width - axle_width) / 2, rod_height / 2 + axle_height),
@@ -75,7 +79,7 @@ def get_drone(ax, x, y, θ):
         prop_height,
         facecolor="tab:gray",
         edgecolor="k",
-        alpha=0.7,
+        alpha=0.7 * alpha,
     )
     patches = (rod, hub, axle_left, axle_right, prop_left, prop_right)
     for patch in patches:
