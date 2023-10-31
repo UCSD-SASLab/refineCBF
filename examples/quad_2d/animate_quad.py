@@ -95,7 +95,7 @@ def get_drone(ax, x, y, θ, rel_size=1.0, height_scale=1.0, color="tab:blue", al
     return artists
 
 
-def animate_planar_quad(t, x, y, θ, fig=None, title_string=None, display_in_notebook=False):
+def animate_planar_quad(t, x, y, θ, fig=None, title_string=None):
     """Animate the planar quadrotor system from given position data.
     All arguments are assumed to be 1-D NumPy arrays, where `x`, `y`, and `θ`
     are the degrees of freedom of the planar quadrotor over time `t`.
@@ -205,20 +205,12 @@ def animate_planar_quad(t, x, y, θ, fig=None, title_string=None, display_in_not
         interval=step * dt * 1000,
         blit=True,
     )
-    if display_in_notebook:
-        try:
-            get_ipython()
-            from IPython.display import HTML
 
-            ani = HTML(ani.to_html5_video())
-        except (NameError, ImportError):
-            raise RuntimeError("`display_in_notebook = True` requires this code to be run in jupyter/colab.")
     return fig, ani
 
 
 def animate_multi_planar_quad(
-    t, x, y, θ, fig=None, alphas=None, colors=None, title_string=None, display_in_notebook=False
-):
+    t, x, y, θ, fig=None, alphas=None, colors=None, title_string=None):
     """Animate the planar quadrotor system from given position data.
     All arguments are assumed to be 1-D NumPy arrays, where `x`, `y`, and `θ`
     are the degrees of freedom of the planar quadrotor over time `t`.
@@ -347,12 +339,4 @@ def animate_multi_planar_quad(
         interval=step * dt * 1000,
         blit=True,
     )
-    if display_in_notebook:
-        try:
-            get_ipython()
-            from IPython.display import HTML
-
-            ani = HTML(ani.to_html5_video())
-        except (NameError, ImportError):
-            raise RuntimeError("`display_in_notebook = True` requires this code to be run in jupyter/colab.")
     return fig, ani
