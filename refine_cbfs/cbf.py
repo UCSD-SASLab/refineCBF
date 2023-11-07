@@ -34,6 +34,9 @@ class TabularCBF(CBF):
         self._grad_vf_table = None
         super().__init__(dynamics, params, test, **kwargs)
 
+    def clip_state(self, state):
+        return np.clip(state, np.array(self.grid.domain.lo) + 0.01, np.array(self.grid.domain.hi) - 0.01)
+
     def vf(self, state: np.ndarray, time: float):
         """_summary_
 
@@ -46,23 +49,23 @@ class TabularCBF(CBF):
         """
         assert self.vf_table is not None, "Requires instantiation of vf_table"
         if state.ndim == 1:
-            state_i = jnp.clip(state, jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+            state_i = self.clip_state(state)
             return self.grid.interpolate(self.vf_table, state_i)
         else:
             vf = np.zeros(state.shape[0])
             for i in range(state.shape[0]):
-                state_i = jnp.clip(state[i], jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+                state_i = self.clip(state[i])
                 vf[i] = self.grid.interpolate(self.vf_table, state_i)
             return vf
 
     def _grad_vf(self, state, time):
         if state.ndim == 1:
-            state_i = jnp.clip(state, jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
+            state_i = self.clip_state(state)
             return self.grid.interpolate(self._grad_vf_table, state_i)
         else:
             grad_vf = np.zeros_like(state)
             for i in range(state.shape[0]):
-                state_i = np.clip(state[i], np.array(self.grid.domain.lo) + 0.01, np.array(self.grid.domain.hi) - 0.01)
+                state_i = self.clip_state(state[i])
                 grad_vf[i] = self.grid.interpolate(self._grad_vf_table, state_i)
         return grad_vf
 
@@ -124,22 +127,26 @@ class TabularTVControlAffineCBF(TabularControlAffineCBF):
     def vf(self, state, time):
         assert self.vf_table is not None and isinstance(self.vf_table, interp1d)
         if state.ndim == 1:
-            return self.grid.interpolate(self.vf_table(time)[0], state)
+            time = time.item() if hasattr(time, "item") else time  # If time is an array, convert to float
+            state_i = self.clip_state(state)
+            return self.grid.interpolate(self.vf_table(time), state_i)
         else:
+            time = jnp.array(time) if isinstance(time, float) else time  # If time is a float, convert to array
             vf = np.zeros(state.shape[0])
             for i in range(state.shape[0]):
-                state_i = jnp.clip(state[i], jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01)
-                vf[i] = self.grid.interpolate(self.vf_table(time)[0], state_i)
+                state_i = self.clip_state(state[i])
+                vf[i] = self.grid.interpolate(self.vf_table(time[i]), state_i)
             return vf
 
     def _grad_vf(self, state, time):
         if state.ndim == 1:
-            return self.grid.interpolate(self._grad_vf_table(time)[0], state)
+            time = time.item() if hasattr(time, "item") else time  # If time is an array, convert to float
+            state_i = self.clip_state(state)
+            return self.grid.interpolate(self._grad_vf_table(time), state_i)
         else:
+            time = jnp.array(time) if isinstance(time, float) else time  # If time is a float, convert to array
             grad_vf = np.zeros_like(state)
             for i in range(state.shape[0]):
-                state_i = jnp.clip(
-                    state[i], jnp.array(self.grid.domain.lo) + 0.01, jnp.array(self.grid.domain.hi) - 0.01
-                )
-                grad_vf[i] = self.grid.interpolate(self._grad_vf_table(time)[0], state_i)
+                state_i = self.clip_state(state[i])
+                grad_vf[i] = self.grid.interpolate(self._grad_vf_table(time[i]), state_i)
             return grad_vf
