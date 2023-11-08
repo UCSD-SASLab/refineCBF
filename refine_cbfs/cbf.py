@@ -54,7 +54,7 @@ class TabularCBF(CBF):
         else:
             vf = np.zeros(state.shape[0])
             for i in range(state.shape[0]):
-                state_i = self.clip(state[i])
+                state_i = self.clip_state(state[i])
                 vf[i] = self.grid.interpolate(self.vf_table, state_i)
             return vf
 
