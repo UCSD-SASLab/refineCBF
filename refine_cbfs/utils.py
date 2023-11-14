@@ -42,7 +42,12 @@ def build_sdf(boundary, obstacles):
     def sdf(x):
         sdf = jnp.min(jnp.array([x - boundary[:,0], boundary[:,1] - x]))
         for obstacle in obstacles:
-            obstacle_sdf = jnp.max(jnp.array([obstacle[:,0] - x, x - obstacle[:,1]]))
+            max_dist_per_dim = jnp.max(jnp.array([obstacle[:,0] - x, x - obstacle[:,1]]), axis=0)
+            def outside_obstacle(_):
+                return jnp.linalg.norm(jnp.maximum(max_dist_per_dim, 0))
+            def inside_obstacle(_):
+                return jnp.max(max_dist_per_dim)
+            obstacle_sdf = lax.cond(jnp.all(max_dist_per_dim) < 0.0, inside_obstacle, outside_obstacle, operand=None)
             sdf = jnp.min(jnp.array([sdf, obstacle_sdf]))
         return sdf
     return sdf
