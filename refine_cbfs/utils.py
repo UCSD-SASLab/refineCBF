@@ -51,3 +51,28 @@ def build_sdf(boundary, obstacles):
             sdf = jnp.min(jnp.array([sdf, obstacle_sdf]))
         return sdf
     return sdf
+
+
+def hj_solve(solver_settings, dyn_hjr, grid, times, init_values):
+    """
+    Extension of hj_solve for parametric uncertainty.
+    Args:
+        dynamics: hj_reachability.Dynamics object
+        grid: hj_reachability.Grid object
+        target_values: [n x n x n x n] array of target values
+        sdf: signed distance function
+    Returns:
+        [n x n x n x n] array of value function values
+    """
+    import hj_reachability as hj
+    extrema = dyn_hjr.dynamics.get_param_combinations(type="extrema")
+    values = []
+    for i, extremum in enumerate(extrema):
+        import copy
+        dyn_hjr_alt = copy.deepcopy(dyn_hjr)
+        dyn_hjr_alt.dynamics.params = extremum
+        values_i = hj.solve(solver_settings, dyn_hjr_alt, grid, times, init_values)
+        values.append(copy.deepcopy(values_i))
+    
+    return jnp.min(jnp.array(values), axis=0)
+        
