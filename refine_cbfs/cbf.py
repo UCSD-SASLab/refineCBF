@@ -109,20 +109,21 @@ class TabularTVControlAffineCBF(TabularControlAffineCBF):
         return self._vf_table
 
     def set_vf_table(self, times, values):
+        times_mod = np.concatenate([times, [times[-1] + (times[-1] - times[-2])]])
         if isinstance(values, interp1d):
             self._vf_table = values
-            nbr_steps = max(len(times), 21)
-            times = np.linspace(times[0], times[-1], nbr_steps)
             grad_vfs = []
             for time in tqdm(times):
                 grad_vfs.append(np.array(self.grid.grad_values(self.vf_table(time))))
+            grad_vfs.append(np.array(self.grid.grad_values(self.vf_table(times[-1]))))  # Twice for last timestep to control extrapolation
         else:
-            self._vf_table = interp1d(times, values, axis=0)
+            values_mod = np.concatenate([values, values[-1][None, :]], axis=0)  # Twice for last timestep to control extrapolation
+            self._vf_table = interp1d(times_mod, values_mod, axis=0, fill_value="extrapolate")
             grad_vfs = []
-            for value in tqdm(values):
+            for value in tqdm(values_mod):
                 grad_vfs.append(np.array(self.grid.grad_values(value)))
         grad_vfs = np.array(grad_vfs)
-        self._grad_vf_table = interp1d(times, grad_vfs, axis=0)
+        self._grad_vf_table = interp1d(times_mod, grad_vfs, axis=0, fill_value="extrapolate")
 
     def vf(self, state, time):
         assert self.vf_table is not None and isinstance(self.vf_table, interp1d)
