@@ -1,6 +1,7 @@
 import functools
 import numpy as np
 import jax.numpy as jnp
+from jax import lax
 from hj_reachability import Grid
 
 
