@@ -8,7 +8,8 @@ In particular:
 
 - The `refine_cbfs` directory contains code to define a tabular CBF (a CBF defined over a grid) and provides an interface with `hj_reachability` and `cbf_opt` to define its dynamics.
 - The `examples` folder provides the simulation results for the paper mentioned above
-
+- Don't forget to add this directory to your path to have working examples! `sys.path.append('DIR_LOC/refineCBF')`. 
+- Install GUROBI
 ## Requirements
 
 - `hj_reachability`: Toolbox for computing HJ reachability leveraging `jax`: `pip install --upgrade hj-reachability`.
