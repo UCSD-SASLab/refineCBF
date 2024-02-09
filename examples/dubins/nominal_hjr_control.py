@@ -110,20 +110,6 @@ class NominalControlHJNP:
         idx = (jnp.abs(self.times - time)).argmin()
         return self.tv_vf[idx]
 
-    # def _line_search(self, x):
-    #     upper = self.time_intervals
-    #     lower = 0
-
-    #     while upper > lower:
-    #         mid = (upper + lower) // 2
-    #         val = self.grid.interpolate(self.tv_vf[mid], x)
-
-    #         if val > 1e-4:
-    #             upper = mid
-    #         else:
-    #             lower = mid + 1
-    #     return mid
-
     def _line_search(self, x):
         upper = self.time_intervals
         lower = 0
@@ -135,10 +121,6 @@ class NominalControlHJNP:
             lower, upper = jnp.where(
                 val > 1e-4, jnp.array([lower, mid]), jnp.array([mid + 1, upper])
             )
-            # if val > 1e-4:
-            #     upper = mid
-            # else:
-            #     lower = mid + 1
         return mid
 
     def get_nominal_control(self, x, t):
@@ -151,13 +133,6 @@ class NominalControlHJNP:
             grad_val = self.grid.interpolate(grad_vals, x[i])
             opt_ctrl[i] = self.dyn.optimal_control_state(x[i], t, grad_val)
         return opt_ctrl
-
-        # idx = self._line_search(x)
-        # grad_vals = self.grid.grad_values(
-        #     self.tv_vf[idx]
-        # )  # CHECK WHETHER THIS CAN BE PRECOMPUTED FOR ALL TIMES
-        # grad_val = self.grid.interpolate(grad_vals, x)
-        # return np.array(self.dyn.optimal_control_state(x, 0.0, grad_val))
 
     def get_nominal_control_table(self):
         table = np.zeros_like(self.grid.states)[..., np.newaxis]

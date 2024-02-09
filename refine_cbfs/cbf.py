@@ -15,7 +15,7 @@ class TabularCBF(CBF):
     an existing val fct.
     """
 
-    def __init__(self, dynamics: Dynamics, params: dict = dict(), test: bool = False, **kwargs) -> None:
+    def __init__(self, dynamics: Dynamics, **kwargs) -> None:
         """Initialize a TabularCBF.
 
         Args:
@@ -32,7 +32,7 @@ class TabularCBF(CBF):
         self._vf_table = None
         self.orig_cbf = None
         self._grad_vf_table = None
-        super().__init__(dynamics, params, test, **kwargs)
+        super().__init__(dynamics, **kwargs)
 
     def clip_state(self, state):
         return np.clip(state, np.array(self.grid.domain.lo) + 0.01, np.array(self.grid.domain.hi) - 0.01)
@@ -97,8 +97,8 @@ class TabularCBF(CBF):
 
 
 class TabularControlAffineCBF(ControlAffineCBF, TabularCBF):
-    def __init__(self, dynamics: ControlAffineDynamics, params: dict = dict(), test: bool = False, **kwargs) -> None:
-        super().__init__(dynamics, params, test, **kwargs)
+    def __init__(self, dynamics: ControlAffineDynamics, **kwargs) -> None:
+        super().__init__(dynamics, **kwargs)
 
 
 class TabularTVControlAffineCBF(TabularControlAffineCBF):
@@ -115,9 +115,13 @@ class TabularTVControlAffineCBF(TabularControlAffineCBF):
             grad_vfs = []
             for time in tqdm(times):
                 grad_vfs.append(np.array(self.grid.grad_values(self.vf_table(time))))
-            grad_vfs.append(np.array(self.grid.grad_values(self.vf_table(times[-1]))))  # Twice for last timestep to control extrapolation
+            grad_vfs.append(
+                np.array(self.grid.grad_values(self.vf_table(times[-1])))
+            )  # Twice for last timestep to control extrapolation
         else:
-            values_mod = np.concatenate([values, values[-1][None, :]], axis=0)  # Twice for last timestep to control extrapolation
+            values_mod = np.concatenate(
+                [values, values[-1][None, :]], axis=0
+            )  # Twice for last timestep to control extrapolation
             self._vf_table = interp1d(times_mod, values_mod, axis=0, fill_value="extrapolate")
             grad_vfs = []
             for value in tqdm(values_mod):
