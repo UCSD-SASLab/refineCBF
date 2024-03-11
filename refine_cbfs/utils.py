@@ -73,6 +73,8 @@ def hj_solve(solver_settings, dyn_hjr, grid, times, init_values):
         dyn_hjr_alt = copy.deepcopy(dyn_hjr)
         dyn_hjr_alt.dynamics.params = extremum
         values_i = hj.solve(solver_settings, dyn_hjr_alt, grid, times, init_values)
+        if type(values_i) == tuple:
+            values_i = values_i[1]
         values.append(copy.deepcopy(values_i))
     
     return jnp.min(jnp.array(values), axis=0)
